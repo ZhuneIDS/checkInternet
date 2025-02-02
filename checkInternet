@@ -1,0 +1,42 @@
+from pywifi import PyWiFi, const
+import time
+
+def scan_wifi():
+    wifi = PyWiFi()
+    print(wifi)
+    iface = wifi.interfaces()[0]  # Get the first wireless interface
+    print(f"Using interface: {iface.name()}")
+
+    iface.scan()  # Start scanning
+    time.sleep(5)  # Wait for the scan to complete
+    wifi_results = iface.scan_results()  # Get scan results
+
+    # Debugging: Print raw results
+    print("Raw Scan Results:", wifi_results)
+
+    networks = []
+    for network in wifi_results:
+        networks.append({
+            "SSID": network.ssid,
+            "Signal": network.signal,  # Signal strength in dBm
+            "Channel": network.freq,  # Frequency (use to infer channel)
+        })
+    return networks
+
+def analyze_saturation(networks):
+    channels = [network["Channel"] for network in networks]
+    return {channel: channels.count(channel) for channel in set(channels)}
+
+if __name__ == "__main__":
+    wifi_networks = scan_wifi()
+    if wifi_networks:
+        print("Available Wi-Fi Networks:")
+        for network in wifi_networks:
+            print(f"SSID: {network['SSID']}, Signal: {network['Signal']} dBm, Channel: {network['Channel']}")
+        
+        print("\nChannel Saturation Analysis:")
+        saturation = analyze_saturation(wifi_networks)
+        for channel, count in saturation.items():
+            print(f"Channel {channel}: {count} networks")
+    else:
+        print("No networks found.")
